@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "gym-pid"
+version = "0.1.0"
+description = ""
+authors = ["Gal Zafar <theycallmefachfach@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+gymnasium = "^0.29.1"
+pygame = "^2.5.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
