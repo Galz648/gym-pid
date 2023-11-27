@@ -14,6 +14,8 @@ Thoughts and Questions.
 Transitions:
 * 
 """
+
+
 class State(Enum):
     START = auto(),
     END = auto(),
@@ -26,9 +28,6 @@ class State(Enum):
             return True
         
         return False
-
-
-
 
 class Transition:
     def __init__(self, from_state: State, to_state: State):
@@ -51,8 +50,6 @@ class FSM:
         self.actions = { # Dict[Tuple[str, callable]]
         }
     
-
-    @property.setter
     def add_transition(self, t: Transition):
         # add error handle for if the tranisition already exists and such
         self.valid_tranisitions.append(t)
