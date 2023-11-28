@@ -23,11 +23,11 @@ class State(Enum):
 
     
 
-    def __eq__(self, other: object) -> bool:
-        if self.value == other.value:
-            return True
+    # def __eq__(self, other: object) -> bool:
+    #     if self.value == other.value:
+    #         return True
         
-        return False
+    #     return False
 
 class Transition:
     def __init__(self, from_state: State, to_state: State):
@@ -43,18 +43,16 @@ class Transition:
         return False
         
 class FSM:
-    def __init__(self, transitions: List[Transition], states: List[State]):
+    def __init__(self, transitions: List[Transition], states: List[State], initial_state: State):
         self.valid_tranisitions = transitions
         self.states = states
-        self.current_state = State.START
+        self.current_state = initial_state
         self.actions = { # Dict[Tuple[str, callable]]
         }
     
     def add_transition(self, t: Transition):
         # add error handle for if the tranisition already exists and such
         self.valid_tranisitions.append(t)
-
-
         
     def transition(self, t:Transition):
         if self.is_transition_valid(t):

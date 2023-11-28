@@ -5,8 +5,8 @@ import gymnasium as gym
 from typing import List
 import numpy as np
 from fsm import FSM, Transition, State
-from control_system import ControlSystem
-from simulation import Simulation
+from control_system import ControlSystem, ControlSystemState
+from simulation import Simulation, SimulationState
 
 """
 This is an attempt at creating a flight controller for the lunar lander project.
@@ -25,6 +25,7 @@ steps to take:
 TODO:
     * Create a finite state machine
 """
+
 
 def simulate_moonlander(seed: int = 42, render_mode: str = 'human', continuous: bool = True):
     env = gym.make("LunarLander-v2",render_mode=render_mode,continuous=continuous)
