@@ -9,7 +9,7 @@ class SimulationState(Enum):
 	IN_PROGRESS= auto(),	
 	END = auto()
 
-	def __eq__(self, other: object) -> bool:
+	def __eq__(self, other: object) -> bool: # TODO: is this the correct way to do this?
 		if self.value == other.value:
 			return True
         
@@ -25,9 +25,12 @@ class SimulationFSM:
 		self.fsm = FSM(transitions=self.transitions, states=self.states, initial_state=intial_state)
 
 	#@property.setter
-	def set_state(self, state: State):
+	def set_state(self, state: SimulationState):
 		self.fsm.current_state = state
 
+
+	def end_state(self):
+		return self.fsm.current_state == SimulationState.END
 	def add_transition(self, t: Transition):
 		# add error handle for if the tranisition already exists and such
 		self.transitions.append(t)
@@ -58,6 +61,9 @@ class SimulationFSM:
 		if terminated or truncated:
 			self.transition(Transition(self.current_state, SimulationState.END)) # TODO: only require to_state?, more clean
 
+		elif self.current_state == SimulationState.START:
+			self.transition(Transition(self.current_state, SimulationState.IN_PROGRESS))
+
 class Simulation:
 	def __init__(self, env: gym.Env, control_system: ControlSystem):
 		self.env = env
@@ -78,7 +84,7 @@ class Simulation:
 	def simulate(self):
 		self.setup()
 		# some default action/ first action has to be defined
-		while self.fsm.current_state != SimulationState.END:
+		while not self.fsm.end_state():
 			# feed the observation to the control system
 			controller_action = self.control_system.choose_action(self.observation[4])
 			self.observation, terminated, truncated = self.step(controller_action)
