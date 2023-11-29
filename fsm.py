@@ -37,7 +37,7 @@ class Transition:
 
 
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other: 'Transition') -> bool:
         if self.from_state == other.from_state and self.to_state == other.to_state:
             return True
         

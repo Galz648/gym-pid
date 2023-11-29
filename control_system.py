@@ -1,21 +1,20 @@
 from fsm import FSM, Transition
 from typing import List
-from controllers import Controller, OrientationController, LandingController
+from controllers import Controller, OrientationController
 from enum import Enum, auto
+from math import sqrt
 
-class ControlSystemState(Enum):
-    LANDING = auto(),
+from statemachine import StateMachine, State
 
+class ControlSystemMachine(StateMachine):
+    start = State('START', initial=True)
+    navigation = State('NAVIGATION')
+    orientation = State('ORIENTATION')
+    end = State('END')
 
-class ControlSystemFSM:
-    
-    def __init__(self):
-        self.transitions: List[Transition] = [
-        ]
-        self.states: List[ControlSystemState] = [s for s in ControlSystemState]
-        self.state_controller_mapping = {}
-        self.current_state = ControlSystemState.LANDING
-        self.fsm = FSM(transitions=self.transitions, states=self.states, initial_state=self.current_state)
+    navigate = start.to(navigation) | orientation.to(navigation)
+    orient = navigation.to(orientation)
+    end = navigation.to(end) | orientation.to(end)
 
 class ControlSystem:
     """
@@ -24,29 +23,32 @@ class ControlSystem:
         * Handle the chaning of controllers, and the setpoint
     """
     def __init__(self):
-        self.fsm = ControlSystemFSM()
+        self.fsm = ControlSystemMachine()
         self.orientation_controller = OrientationController()
-        self.controllers = {ControlSystemState.LANDING: self.orientation_controller}
-        self.states: List[ControlSystemState] = [s for s in ControlSystemState]
-        self.setpoint = None # TODO: make this a function of the ControlSystem, this depends on the state, and how the state is defined
-        self.state_controller_mapping = {}
+        # self.current_controller = self.choose_controller()
+        self.setpoint = self.choose_controller().setpoint
 
-    def choose_controller(self) -> Controller:
-        return self.controllers[self.fsm.current_state]
+    def choose_controller(self, observation: List[float]) -> Controller:
+        return self.state_controller_mapping[self.fsm.current_state]
 
-    def choose_action(self, observation) -> List[float]:
-        if self.fsm.current_state == ControlSystemState.LANDING:
-            chosen_controller: Controller = self.choose_controller()
-            return chosen_controller.choose_action(observation)
-        return [0,0]
-        # WHAT IS THIS SUPPOSED TO DO? ANSWER: this is supposed to choose an action based on the current state of the fsm
-    def step(self):
-        # self.fsm.step(self.observation)
+    def choose_action(self, observation: List[float]) -> List[float]:
+        # return self.choose_controller().choose_action(observation)
+        pass
+
+        # if too far away from target(center), use navigation controller
+        # if orientation is too steep, while inside the range of the target, use orientation controller
+    def step(self, observation: List[float]):
+        self.controller = self.choose_controller(observation)
+        self.setpoint = self.controller.setpoint
+            
+
+        # change the setpoint (whether or not the controller is changed)
         pass
 
 
+# The individual controller should be calculating the error, and the setpoint
 def calculate_error(setpoint: float, observation: float) -> float: # TODO: make this a function of the ControlSystem
     """
-    The error calculates the angle of the craft from the landing area
+    The error calculates the angle of the craft from the LAND area
     """
     return observation - setpoint
