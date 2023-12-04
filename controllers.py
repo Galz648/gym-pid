@@ -8,8 +8,16 @@ class Controller(ABC):
 
 
 
+class NavigationController(Controller):
+    pass
 
-class OrientationController:
+
+class OrientationController(Controller):
+    setpoint: float = 0.0
+
+    def observation_to_process_variable(self, observation: np.ndarray) -> float:
+        return observation[4]
+    
     @staticmethod
     def choose_action(error: float) -> np.ndarray:
         # Given the error (related to orientation), choose an action that is opposite to this or    ientation
@@ -26,3 +34,8 @@ class OrientationController:
             print("nothing was done")
             return np.ndarray(shape=(2,),buffer=np.array([-1, 0.0]))
 
+    def calculate_error(self, setpoint: float, observation: float) -> float:
+        """
+        The error calculates the angle of the craft from the landing area
+        """
+        return OrientationController.setpoint - self.observation_to_process_variable(observation)

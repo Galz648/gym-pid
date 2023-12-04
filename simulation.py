@@ -1,93 +1,54 @@
-from fsm import FSM, State, Transition
 from control_system import ControlSystem
 import gymnasium as gym
-from typing import List, Tuple
-from enum import Enum, auto
+from typing import List, Tuple, Optional
+from statemachine import StateMachine, State
 
-class SimulationState(Enum):
-	START = auto(),
-	IN_PROGRESS= auto(),	
-	END = auto()
+class SimulationMachine(StateMachine):
+	start = State('Start', initial=True)
+	in_progress = State('In Progress')
+	end = State('End', final=True)
 
-	def __eq__(self, other: object) -> bool: # TODO: is this the correct way to do this?
-		if self.value == other.value:
-			return True
-        
-		return False
-
-class SimulationFSM:
-	def __init__(self, intial_state: SimulationState):
-		self.transitions: List[Transition] = [
-		Transition(from_state=SimulationState.START, to_state=SimulationState.END)
-		]
-		self.states: List[SimulationState] = [s for s in SimulationState]
-		self.state_controller_mapping = {}
-		self.fsm = FSM(transitions=self.transitions, states=self.states, initial_state=intial_state)
-
-	#@property.setter
-	def set_state(self, state: SimulationState):
-		self.fsm.current_state = state
-
-
-	def end_state(self):
-		return self.fsm.current_state == SimulationState.END
-	def add_transition(self, t: Transition):
-		# add error handle for if the tranisition already exists and such
-		self.transitions.append(t)
-		
-	def transition(self, t:Transition):
-		valid_transition = self.is_transition_valid(t) # Should this be checked here ? What are the responsabillities of this function
-
-		if valid_transition: 
-			self.set_state(t.to_state)
-		else:
-			raise Exception("Invalid transition")
-
-	def is_transition_valid(self, t: Transition) -> bool:
-        # TODO: add error handling for invalid transition
-		return t in self.transitions and t.from_state in self.states and t.to_state in self.states
-
-	@property
-	def current_state(self):
-		return self.fsm.current_state
+	sequence = start.to(in_progress) | in_progress.to(end)
 	
-	def step(self, step_info: Tuple[List[float], bool, bool]):
-		"""
-		Should change the internal state of the fsm, in according to the given environment information.
-		The state might not change on every state
-		"""
-		observation, terminated, truncated = step_info
+	def on_start(self):
+		print('Simulation started')
 
-		if terminated or truncated:
-			self.transition(Transition(self.current_state, SimulationState.END)) # TODO: only require to_state?, more clean
+	def on_in_progress(self):
+		print('Simulation in progress')
 
-		elif self.current_state == SimulationState.START:
-			self.transition(Transition(self.current_state, SimulationState.IN_PROGRESS))
+	def on_end(self):
+		print('Simulation ended')
+
 
 class Simulation:
 	def __init__(self, env: gym.Env, control_system: ControlSystem):
 		self.env = env
 		self.control_system = control_system
-		self.observation = None
-		self.fsm = SimulationFSM(SimulationState.START)
+		self.observation = Optional[List[float]]
+		self.fsm = SimulationMachine()
 
 	def setup(self):
-		self.observation, info = self.env.reset()
+		observation, info = self.env.reset()
+		return observation, info
 
 	def step(self, action): # Check if terminated or truncated, and if so, change fsm state
 		observation, reward, terminated, truncated, info = self.env.step(action)
+		if terminated or truncated:
+			self.fsm.sequence() # end the simulation
 		self.observation = observation
-		return observation, terminated, truncated
+		return observation, reward, terminated, truncated
 
 
 
 	def simulate(self):
-		self.setup()
+		action: Optional[List[float]]= None # temporary
+		observation, _ = self.setup()
 		# some default action/ first action has to be defined
-		while not self.fsm.end_state():
-			# feed the observation to the control system
-			controller_action = self.control_system.choose_action(self.observation[4])
-			self.observation, terminated, truncated = self.step(controller_action)
-			self.fsm.step((self.observation, terminated, truncated))
+		while not self.fsm.end.is_active:
+			action = self.control_system.step(observation)
+			observation, reward, terminated, truncated = self.step(action)
+			print(f"observation: {self.observation[4]}")
+			
+
 			
 

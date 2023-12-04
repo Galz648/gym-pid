@@ -6,11 +6,13 @@ authors = ["Gal Zafar <theycallmefachfach@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.9,<3.13"
 gymnasium = "^0.29.1"
 pygame = "^2.5.2"
 mypy = "^1.7.0"
 numpy = "^1.26.2"
+pytest = "^7.4.3"
+python-statemachine = {extras = ["diagrams"], version = "^2.1.2"}
 
 [build-system]
 requires = ["poetry-core"]

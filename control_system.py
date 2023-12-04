@@ -1,8 +1,5 @@
-from fsm import FSM, Transition
-from typing import List
-from controllers import Controller, OrientationController
-from enum import Enum, auto
-from math import sqrt
+from typing import List, Optional
+from controllers import Controller, OrientationController, NavigationController
 
 from statemachine import StateMachine, State
 
@@ -10,7 +7,7 @@ class ControlSystemMachine(StateMachine):
     start = State('START', initial=True)
     navigation = State('NAVIGATION')
     orientation = State('ORIENTATION')
-    end = State('END')
+    end = State('END', final=True)
 
     navigate = start.to(navigation) | orientation.to(navigation)
     orient = navigation.to(orientation)
@@ -25,25 +22,33 @@ class ControlSystem:
     def __init__(self):
         self.fsm = ControlSystemMachine()
         self.orientation_controller = OrientationController()
-        # self.current_controller = self.choose_controller()
-        self.setpoint = self.choose_controller().setpoint
+        # self.navigation_controller = NavigationController()
+        self.controller = Optional[Controller]
+        self.state_controller_mapping = {
+            # self.fsm.navigation: self.navigation_controller,
+            self.fsm.orientation: self.orientation_controller
+        }
 
     def choose_controller(self, observation: List[float]) -> Controller:
-        return self.state_controller_mapping[self.fsm.current_state]
+        return self.orientation_controller # TODO: make this applicable to all controllers
 
-    def choose_action(self, observation: List[float]) -> List[float]:
-        # return self.choose_controller().choose_action(observation)
-        pass
+    def choose_action(self, controller: Controller, observation: List[float]) -> List[float]:
+        return controller.choose_action(observation)
 
         # if too far away from target(center), use navigation controller
         # if orientation is too steep, while inside the range of the target, use orientation controller
-    def step(self, observation: List[float]):
-        self.controller = self.choose_controller(observation)
-        self.setpoint = self.controller.setpoint
-            
-
-        # change the setpoint (whether or not the controller is changed)
-        pass
+    def step(self, observation: List[float]): # should return an action to be taken
+        """
+        The step function should be called every time the simulation is stepped
+        """
+        controller = self.choose_controller(observation)
+		# let the controller choose action
+        controller_action = self.choose_action(controller, observation[4]) # feed the observation to the control system
+        # TODO: step the sub-components of the control system
+        return controller_action
+		 
+        # self.fsm.step((observation, terminated, truncated))
+        
 
 
 # The individual controller should be calculating the error, and the setpoint
